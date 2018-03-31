@@ -1,4 +1,8 @@
+import math
 import numpy
+import os
+
+#### DEBUG
 import sys
 
 class WaveLoader():
@@ -26,6 +30,9 @@ class WaveLoader():
         }
     }
     audioData = []
+
+    name = ""
+    length = 0
 
     def loadWavefile(self, filePath):
         def readASCIItext(binaryFile, nBytes):
@@ -81,8 +88,19 @@ class WaveLoader():
         def readExtraFormatInfo(length, byteArray):
             return {}
 
+        def normalizeSample(sample, bitRate):
+            maxValue = 0
+            if (bitRate == 8): maxValue = 128
+            if (bitRate == 16): maxValue = 32768
+            if (bitRate == 24): maxValue = 8388608
+
+            return sample/maxValue
+
         def mapChannels(binaryFile, audioChannels, bytesPerChannel):
-            return [readInt(binaryFile, bytesPerChannel, 'little', True) for i in range(audioChannels)]
+            return [normalizeSample(
+                        readInt(binaryFile, bytesPerChannel, 'little', True),
+                        self.riffHeader['fmtData']['bitsPerSample']
+                        ) for i in range(audioChannels)]
 
         def readAudioData(binaryFile):
             audioChannels = self.riffHeader['fmtData']['channels']
@@ -91,7 +109,11 @@ class WaveLoader():
             audioSamples = int(audioChunkBytes/self.riffHeader['fmtData']['blockAlign'])
 
             if (audioChannels == 1):
-                self.audioData = [readInt(binaryFile, bytesPerChannel, 'little', True) for x in range(audioSamples)]
+                self.audioData = [
+                    normalizeSample(
+                        readInt(binaryFile, bytesPerChannel, 'little', True),
+                        self.riffHeader['fmtData']['bitsPerSample']
+                        ) for x in range(audioSamples)]
             else:
                 self.audioData = [
                     mapChannels(binaryFile, audioChannels, bytesPerChannel) for x in range(audioSamples)
@@ -99,8 +121,23 @@ class WaveLoader():
 
         with open(filePath, 'rb') as binaryFile:
             readHeader(binaryFile)
+            self.name = os.path.basename(filePath)
+            self.length = self.riffHeader['dataHeader']['chunkDataSize']/self.riffHeader['fmtData']['samplingRate']/self.riffHeader['fmtData']['blockAlign']
             readAudioData(binaryFile)
-        
+    
+    def generateWaveformSummary(self, drawPoints):
+        # Returns N points for drawing simplified waveform (averges over range)
+        audioSamples = len(self.audioData)
+        bufferLength = math.ceil(audioSamples/drawPoints)
+
+        if (self.riffHeader['fmtData']['channels']) == 1:
+            normalizedSamples = [ abs(self.audioData[i]) for i in range(len(self.audioData)) ]
+        else:
+            normalizedSamples = [ abs(sum(self.audioData[i]))/len(self.audioData[i]) for i in range(len(self.audioData)) ]
+
+        points = [ sum(normalizedSamples[i*bufferLength:(i+1)*bufferLength])/bufferLength for i in range(drawPoints-1) ]
+        points.append( sum(normalizedSamples[(drawPoints-1)*bufferLength:])/len(normalizedSamples[(drawPoints-1)*bufferLength:]) )
+        return points
 
 #### Debug
 
@@ -109,5 +146,7 @@ if __name__ == '__main__':
     
     waveLoader = WaveLoader()
     waveLoader.loadWavefile(wavePath)
-    print(waveLoader.riffHeader)
+    # print(waveLoader.riffHeader)
+
+    print(len(waveLoader.generateWaveformSummary(1000)))
 
