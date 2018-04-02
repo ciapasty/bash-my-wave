@@ -5,7 +5,7 @@ import os
 import sys
 
 
-class WaveLoader():
+class WaveReader():
     riffHeader = {
         'chunkID': "",
         'chunkDataSize': 0,
@@ -180,7 +180,7 @@ class WaveLoader():
 
 if __name__ == '__main__':
     wavePath = sys.argv[1]
-    waveLoader = WaveLoader()
+    waveLoader = WaveReader()
     waveLoader.loadWavefile(wavePath)
     # print(waveLoader.riffHeader)
 
