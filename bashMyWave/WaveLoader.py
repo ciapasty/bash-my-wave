@@ -1,9 +1,9 @@
 import math
-import numpy
 import os
 
-#### DEBUG
+# DEBUG
 import sys
+
 
 class WaveLoader():
     riffHeader = {
@@ -39,16 +39,26 @@ class WaveLoader():
             return bytes(binaryFile.read(nBytes)).decode('ASCII')
 
         def readInt(binaryFile, nBytes, endian, signed):
-            return int.from_bytes(binaryFile.read(nBytes), endian, signed=signed)
+            return int.from_bytes(
+                binaryFile.read(nBytes),
+                endian,
+                signed=signed
+                )
 
         def readHeader(binaryFile):
             self.riffHeader['chunkID'] = readASCIItext(binaryFile, 4)
-            self.riffHeader['chunkDataSize'] = readInt(binaryFile, 4, 'little', False)
+            self.riffHeader['chunkDataSize'] = readInt(
+                binaryFile, 4, 'little', False
+                )
             self.riffHeader['riffTypeID'] = readASCIItext(binaryFile, 4)
-            self.riffHeader['fmtHeader']['chunkID'] = readASCIItext(binaryFile, 4)
-            self.riffHeader['fmtHeader']['chunkDataSize'] = readInt(binaryFile, 4, 'little', False)
+            self.riffHeader['fmtHeader']['chunkID'] = readASCIItext(
+                binaryFile, 4
+                )
+            self.riffHeader['fmtHeader']['chunkDataSize'] = readInt(
+                binaryFile, 4, 'little', False
+                )
             self.riffHeader['fmtData'] = readFormatData(
-                self.riffHeader['fmtHeader']['chunkDataSize'], 
+                self.riffHeader['fmtHeader']['chunkDataSize'],
                 binaryFile
                 )
             # BWF support
@@ -67,19 +77,19 @@ class WaveLoader():
 
             self.riffHeader['dataHeader']['chunkID'] = chunkID
             self.riffHeader['dataHeader']['chunkDataSize'] = chunkDataSize
-        
+
         def readFormatData(lenght, binaryFile):
             fmtData = {}
-            fmtData['audioFormat'] =    readInt(binaryFile, 2, 'little', False)
-            fmtData['channels'] =       readInt(binaryFile, 2, 'little', False)
-            fmtData['samplingRate'] =   readInt(binaryFile, 4, 'little', False)
+            fmtData['audioFormat'] = readInt(binaryFile, 2, 'little', False)
+            fmtData['channels'] = readInt(binaryFile, 2, 'little', False)
+            fmtData['samplingRate'] = readInt(binaryFile, 4, 'little', False)
             fmtData['bytesPerSecond'] = readInt(binaryFile, 4, 'little', False)
-            fmtData['blockAlign'] =     readInt(binaryFile, 2, 'little', False)
-            fmtData['bitsPerSample'] =  readInt(binaryFile, 2, 'little', False)
-            fmtData['extraBytes'] =     readInt(binaryFile, 2, 'little', False)
+            fmtData['blockAlign'] = readInt(binaryFile, 2, 'little', False)
+            fmtData['bitsPerSample'] = readInt(binaryFile, 2, 'little', False)
+            fmtData['extraBytes'] = readInt(binaryFile, 2, 'little', False)
             if (fmtData['extraBytes'] > 0):
                 fmtData['extraFormatInfo'] = readExtraFormatInfo(
-                    fmtData['extraBytes'], 
+                    fmtData['extraBytes'],
                     binaryFile.read(fmtData['extraBytes'])
                     )
 
@@ -90,9 +100,12 @@ class WaveLoader():
 
         def normalizeSample(sample, bitRate):
             maxValue = 0
-            if (bitRate == 8): maxValue = 128
-            if (bitRate == 16): maxValue = 32768
-            if (bitRate == 24): maxValue = 8388608
+            if (bitRate == 8):
+                maxValue = 128
+            if (bitRate == 16):
+                maxValue = 32768
+            if (bitRate == 24):
+                maxValue = 8388608
 
             return sample/maxValue
 
@@ -105,8 +118,12 @@ class WaveLoader():
         def readAudioData(binaryFile):
             audioChannels = self.riffHeader['fmtData']['channels']
             audioChunkBytes = self.riffHeader['dataHeader']['chunkDataSize']
-            bytesPerChannel = int(self.riffHeader['fmtData']['blockAlign'] / audioChannels)
-            audioSamples = int(audioChunkBytes/self.riffHeader['fmtData']['blockAlign'])
+            bytesPerChannel = int(
+                self.riffHeader['fmtData']['blockAlign']/audioChannels
+                )
+            audioSamples = int(
+                audioChunkBytes/self.riffHeader['fmtData']['blockAlign']
+                )
 
             if (audioChannels == 1):
                 self.audioData = [
@@ -116,37 +133,55 @@ class WaveLoader():
                         ) for x in range(audioSamples)]
             else:
                 self.audioData = [
-                    mapChannels(binaryFile, audioChannels, bytesPerChannel) for x in range(audioSamples)
+                    mapChannels(
+                        binaryFile,
+                        audioChannels,
+                        bytesPerChannel
+                        ) for x in range(audioSamples)
                     ]
 
         with open(filePath, 'rb') as binaryFile:
             readHeader(binaryFile)
             self.name = os.path.basename(filePath)
-            self.length = self.riffHeader['dataHeader']['chunkDataSize']/self.riffHeader['fmtData']['samplingRate']/self.riffHeader['fmtData']['blockAlign']
+            self.length = (
+                self.riffHeader['dataHeader']['chunkDataSize'] /
+                self.riffHeader['fmtData']['samplingRate'] /
+                self.riffHeader['fmtData']['blockAlign']
+                )
             readAudioData(binaryFile)
-    
+
     def generateWaveformSummary(self, drawPoints):
         # Returns N points for drawing simplified waveform (averges over range)
         audioSamples = len(self.audioData)
         bufferLength = math.ceil(audioSamples/drawPoints)
 
         if (self.riffHeader['fmtData']['channels']) == 1:
-            normalizedSamples = [ abs(self.audioData[i]) for i in range(len(self.audioData)) ]
+            normalizedSamples = [
+                abs(self.audioData[i]) for i in range(len(self.audioData))
+                ]
         else:
-            normalizedSamples = [ abs(sum(self.audioData[i]))/len(self.audioData[i]) for i in range(len(self.audioData)) ]
+            normalizedSamples = [
+                abs(sum(self.audioData[i]))/len(self.audioData[i])
+                for i in range(len(self.audioData))
+                ]
 
-        points = [ sum(normalizedSamples[i*bufferLength:(i+1)*bufferLength])/bufferLength for i in range(drawPoints-1) ]
-        points.append( sum(normalizedSamples[(drawPoints-1)*bufferLength:])/len(normalizedSamples[(drawPoints-1)*bufferLength:]) )
+        points = [
+            sum(normalizedSamples[i*bufferLength:(i+1)*bufferLength]) /
+            bufferLength for i in range(drawPoints-1)
+            ]
+        points.append(
+            sum(normalizedSamples[(drawPoints-1)*bufferLength:]) /
+            len(normalizedSamples[(drawPoints-1)*bufferLength:])
+            )
         return points
 
-#### Debug
+# Debug
+
 
 if __name__ == '__main__':
     wavePath = sys.argv[1]
-    
     waveLoader = WaveLoader()
     waveLoader.loadWavefile(wavePath)
     # print(waveLoader.riffHeader)
 
     print(len(waveLoader.generateWaveformSummary(1000)))
-
