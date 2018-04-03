@@ -13,10 +13,10 @@ def read(filePath):
             audioFile['riffHeader']['dataHeader']['chunkDataSize'] /
             audioFile['riffHeader']['fmtData']['samplingRate'] /
             audioFile['riffHeader']['fmtData']['blockAlign']
-            )
+        )
         audioFile['audioData'] = readAudioData(
             binaryFile, audioFile['riffHeader']
-            )
+        )
     
     return audioFile
 
@@ -24,26 +24,26 @@ def read(filePath):
 def generateWaveformSummary(riffHeader, drawPoints, audioData):
     # Returns N points for drawing simplified waveform (averges over range)
     audioSamples = len(audioData)
-    bufferLength = math.ceil(audioSamples/drawPoints)
+    bufferLength = math.ceil(audioSamples / drawPoints)
 
     if (riffHeader['fmtData']['channels']) == 1:
         normalizedSamples = [
             abs(audioData[i]) for i in range(len(audioData))
-            ]
+        ]
     else:
         normalizedSamples = [
-            abs(sum(audioData[i]))/len(audioData[i])
+            abs(sum(audioData[i])) / len(audioData[i])
             for i in range(len(audioData))
-            ]
+        ]
 
     points = [
-        sum(normalizedSamples[i*bufferLength:(i+1)*bufferLength]) /
-        bufferLength for i in range(drawPoints-1)
-        ]
+        sum(normalizedSamples[i * bufferLength:(i + 1) * bufferLength]) /
+        bufferLength for i in range(drawPoints - 1)
+    ]
     points.append(
-        sum(normalizedSamples[(drawPoints-1)*bufferLength:]) /
-        len(normalizedSamples[(drawPoints-1)*bufferLength:])
-        )
+        sum(normalizedSamples[(drawPoints - 1) * bufferLength:]) /
+        len(normalizedSamples[(drawPoints - 1) * bufferLength:])
+    )
     return points
 
 
@@ -56,7 +56,7 @@ def readInt(binaryFile, nBytes, endian, signed):
         binaryFile.read(nBytes),
         endian,
         signed=signed
-        )
+    )
 
 
 def readHeader(binaryFile):
@@ -64,30 +64,30 @@ def readHeader(binaryFile):
     riffHeader['chunkID'] = readASCIItext(binaryFile, 4)
     riffHeader['chunkDataSize'] = readInt(
         binaryFile, 4, 'little', False
-        )
+    )
     riffHeader['riffTypeID'] = readASCIItext(binaryFile, 4)
 
     riffHeader['fmtHeader'] = {}
     riffHeader['fmtHeader']['chunkID'] = readASCIItext(
         binaryFile, 4
-        )
+    )
     riffHeader['fmtHeader']['chunkDataSize'] = readInt(
         binaryFile, 4, 'little', False
-        )
+    )
     riffHeader['fmtData'] = readFormatData(
         riffHeader['fmtHeader']['chunkDataSize'],
         binaryFile
-        )
+    )
     
     # BWF support
     chunkID = bytes(binaryFile.read(4)).decode('ASCII')
     chunkDataSize = int.from_bytes(binaryFile.read(4), 'little')
     while (chunkID != 'data'):  # TODO replace with switch/if
-        riffHeader[chunkID+'Header'] = {
+        riffHeader[chunkID + 'Header'] = {
             'chunkID': chunkID,
             'chunkDataSize': chunkDataSize,
             # Temporary support for BWF and other Chunks
-            chunkID+'Data': {}
+            chunkID + 'Data': {}
         }
         binaryFile.read(chunkDataSize)
         chunkID = bytes(binaryFile.read(4)).decode('ASCII')
@@ -125,14 +125,14 @@ def normalizeSample(sample, bitRate):
     elif (bitRate == 24):
         maxValue = 8388608
 
-    return sample/maxValue
+    return sample / maxValue
 
 
 def mapChannels(binaryFile, audioChannels, bytesPerChannel, bitsPerSample):
     return [normalizeSample(
-                readInt(binaryFile, bytesPerChannel, 'little', True),
-                bitsPerSample
-                ) for i in range(audioChannels)]
+        readInt(binaryFile, bytesPerChannel, 'little', True),
+        bitsPerSample
+    ) for i in range(audioChannels)]
 
 
 def readAudioData(binaryFile, riffHeader):
@@ -140,18 +140,18 @@ def readAudioData(binaryFile, riffHeader):
     audioChannels = riffHeader['fmtData']['channels']
     audioChunkBytes = riffHeader['dataHeader']['chunkDataSize']
     bytesPerChannel = int(
-        riffHeader['fmtData']['blockAlign']/audioChannels
-        )
+        riffHeader['fmtData']['blockAlign'] / audioChannels
+    )
     audioSamples = int(
-        audioChunkBytes/riffHeader['fmtData']['blockAlign']
-        )
+        audioChunkBytes / riffHeader['fmtData']['blockAlign']
+    )
 
     if (audioChannels == 1):
         audioData = [
             normalizeSample(
                 readInt(binaryFile, bytesPerChannel, 'little', True),
                 riffHeader['fmtData']['bitsPerSample']
-                ) for x in range(audioSamples)]
+            ) for x in range(audioSamples)]
     else:
         audioData = [
             mapChannels(
@@ -159,6 +159,6 @@ def readAudioData(binaryFile, riffHeader):
                 audioChannels,
                 bytesPerChannel,
                 riffHeader['fmtData']['bitsPerSample']
-                ) for x in range(audioSamples)
-            ]
+            ) for x in range(audioSamples)
+        ]
     return audioData
