@@ -120,9 +120,9 @@ def normalizeSample(sample, bitRate):
     maxValue = 0
     if (bitRate == 8):
         maxValue = 128
-    if (bitRate == 16):
+    elif (bitRate == 16):
         maxValue = 32768
-    if (bitRate == 24):
+    elif (bitRate == 24):
         maxValue = 8388608
 
     return sample/maxValue
