@@ -27,9 +27,7 @@ def generateWaveformSummary(riffHeader, drawPoints, audioData):
     bufferLength = math.ceil(audioSamples / drawPoints)
 
     if (riffHeader['fmtData']['channels']) == 1:
-        normalizedSamples = [
-            abs(audioData[i]) for i in range(len(audioData))
-        ]
+        normalizedSamples = [abs(audioData[i]) for i in range(len(audioData))]
     else:
         normalizedSamples = [
             abs(sum(audioData[i])) / len(audioData[i])
@@ -62,22 +60,13 @@ def readInt(binaryFile, nBytes, endian, signed):
 def readHeader(binaryFile):
     riffHeader = {}
     riffHeader['chunkID'] = readASCIItext(binaryFile, 4)
-    riffHeader['chunkDataSize'] = readInt(
-        binaryFile, 4, 'little', False
-    )
+    riffHeader['chunkDataSize'] = readInt(binaryFile, 4, 'little', False)
     riffHeader['riffTypeID'] = readASCIItext(binaryFile, 4)
 
     riffHeader['fmtHeader'] = {}
-    riffHeader['fmtHeader']['chunkID'] = readASCIItext(
-        binaryFile, 4
-    )
-    riffHeader['fmtHeader']['chunkDataSize'] = readInt(
-        binaryFile, 4, 'little', False
-    )
-    riffHeader['fmtData'] = readFormatData(
-        riffHeader['fmtHeader']['chunkDataSize'],
-        binaryFile
-    )
+    riffHeader['fmtHeader']['chunkID'] = readASCIItext(binaryFile, 4)
+    riffHeader['fmtHeader']['chunkDataSize'] = readInt(binaryFile, 4, 'little', False)
+    riffHeader['fmtData'] = readFormatData(riffHeader['fmtHeader']['chunkDataSize'], binaryFile)
     
     # BWF support
     chunkID = bytes(binaryFile.read(4)).decode('ASCII')
@@ -118,12 +107,9 @@ def readFormatData(lenght, binaryFile):
 
 def normalizeSample(sample, bitRate):
     maxValue = 0
-    if (bitRate == 8):
-        maxValue = 128
-    elif (bitRate == 16):
-        maxValue = 32768
-    elif (bitRate == 24):
-        maxValue = 8388608
+    if (bitRate == 8): maxValue = 128
+    elif (bitRate == 16): maxValue = 32768
+    elif (bitRate == 24): maxValue = 8388608
 
     return sample / maxValue
 
@@ -139,12 +125,8 @@ def readAudioData(binaryFile, riffHeader):
     audioData = []
     audioChannels = riffHeader['fmtData']['channels']
     audioChunkBytes = riffHeader['dataHeader']['chunkDataSize']
-    bytesPerChannel = int(
-        riffHeader['fmtData']['blockAlign'] / audioChannels
-    )
-    audioSamples = int(
-        audioChunkBytes / riffHeader['fmtData']['blockAlign']
-    )
+    bytesPerChannel = int(riffHeader['fmtData']['blockAlign'] / audioChannels)
+    audioSamples = int(audioChunkBytes / riffHeader['fmtData']['blockAlign'])
 
     if (audioChannels == 1):
         audioData = [
