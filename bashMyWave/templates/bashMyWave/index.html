@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Hello World</title>
+        <title>Bash My Wave</title>
     </head>
     <body>
-        <div id="container">Hello World</div>
+        <div id="container">Welcome to Bash My Wave</div>
+        <form enctype="multipart/form-data" action="/bashMyWave/upload_file/" method="post">{% csrf_token %}
+            <label for="file_name">Select .wav file to upload: </label>
+            <input id="file" type="file" name="file" >
+            <input type="submit" value="OK">
+        </form>
     </body>
 </html>
