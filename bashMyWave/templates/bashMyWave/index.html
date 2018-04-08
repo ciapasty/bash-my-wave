@@ -4,11 +4,24 @@
         <title>Bash My Wave</title>
     </head>
     <body>
-        <p><strong>{{ error_message }}</strong></p>
+        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
         <form enctype="multipart/form-data" method="post">{% csrf_token %}
             <label for="file_name">Select .wav file to upload: </label>
             <input id="file" type="file" name="file" >
             <input type="submit" value="OK">
         </form>
+
+        {% if last20_audiofiles %}
+        <ul>
+            {% for waveFile in last20_audiofiles %}
+            <li>
+                <a href="{% url 'bashMyWave:wave' waveFile.id %}">{{ waveFile.name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No audio files.</p>
+        {% endif %}
+
     </body>
 </html>

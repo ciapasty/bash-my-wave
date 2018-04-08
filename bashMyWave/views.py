@@ -1,8 +1,10 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 
 from .forms import UploadFileForm
-from .Utility import handle_uploaded_files
+from .models import AudioFile
+from .Utility import handle_uploaded_file
 
 import logging
 logger = logging.getLogger('debug.log')
@@ -14,11 +16,19 @@ def index(request):
         form = UploadFileForm(request.POST, request.FILES)
         logger.info("form.isValid: " + str(form.is_valid()))
         # if form.is_valid():
-        errorMessage = handle_uploaded_files(request.FILES)
+        audioFile, errorMessage = handle_uploaded_file(request.FILES)
+        if (audioFile is not None):
+            return HttpResponseRedirect(reverse('bashMyWave:wave', args=(audioFile,)))
 
-    logger.info(errorMessage)
-    return render(request, 'bashMyWave/index.html', {'error_message': errorMessage})
+    return render(
+        request,
+        'bashMyWave/index.html',
+        {
+            'error_message': errorMessage,
+            'last20_audiofiles': AudioFile.objects.order_by('-upload_date')[:20]
+        }
+    )
 
 
-def wave(request, waveName):
+def wave(request, waveID):
     return render(request, 'bashMyWave/wave.html')
