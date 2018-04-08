@@ -9,18 +9,15 @@ logger = logging.getLogger('debug.log')
 
 
 def index(request):
-    return render(request, 'bashMyWave/index.html')
-
-
-def upload_file(request):
+    errorMessage = ''
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         logger.info("form.isValid: " + str(form.is_valid()))
         # if form.is_valid():
-        handle_uploaded_files(request.FILES)
-        # return HttpResponseRedirect('/bashMyWave')
+        errorMessage = handle_uploaded_files(request.FILES)
 
-    return HttpResponseRedirect('/bashMyWave')
+    logger.info(errorMessage)
+    return render(request, 'bashMyWave/index.html', {'error_message': errorMessage})
 
 
 def wave(request, waveName):

@@ -7,9 +7,18 @@ logger = logging.getLogger('debug.log')
 
 
 def handle_uploaded_files(files):
+    errorMessage = ''
+    if (len(files) == 0):
+        return 'No files selected for upload!'
+
     for f in files.keys():
         tempFile = files[f]
-        logger.error(tempFile)
+        existingFile = AudioFile.objects.filter(name=tempFile.name)
+        if (len(existingFile) > 0):
+            errorMessage += tempFile.name + ': file already exists.\n'
+            break
+
+        logger.info('Processing: ' + tempFile.name)
         filePath = 'media/' + tempFile.name
         with open(filePath, 'wb') as destination:
             for chunk in tempFile.chunks():
@@ -24,3 +33,4 @@ def handle_uploaded_files(files):
         )
         
         audioFile.save()
+    return errorMessage
