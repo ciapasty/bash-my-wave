@@ -1,9 +1,28 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Bash My Wave</title>
+        <title>Bash My Wave: {{ audiofile.name }}</title>
     </head>
     <body>
-        <div id="container">Wave file view</div>
+        <div id="container">
+            <h1>{{ audiofile.name }}</h1>
+            <audio controls>
+                    <source src="{{ audiofile.file_path }}" type="audio/x-wav">
+            </audio>
+            <div>Wavefile view</div>
+            <div>
+                {% if comments %}
+                <ul>
+                    {% for comment in comments %}
+                    <li>
+                        [{{ comment.time_posted }}] {{ comment.user }}: {{ comment.text }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No comments yet.</p>
+                {% endif %}
+            </div>
+        </div>
     </body>
 </html>

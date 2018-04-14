@@ -1,9 +1,9 @@
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from .forms import UploadFileForm
-from .models import AudioFile
+from .models import AudioFile, Comment
 from .Utility import handle_uploaded_file
 
 import logging
@@ -16,9 +16,9 @@ def index(request):
         form = UploadFileForm(request.POST, request.FILES)
         logger.info("form.isValid: " + str(form.is_valid()))
         # if form.is_valid():
-        audioFile, errorMessage = handle_uploaded_file(request.FILES)
-        if (audioFile is not None):
-            return HttpResponseRedirect(reverse('bashMyWave:wave', args=(audioFile,)))
+        audioFileID, errorMessage = handle_uploaded_file(request.FILES)
+        if (audioFileID is not None):
+            return HttpResponseRedirect(reverse('bashMyWave:wave', args=(audioFileID,)))
 
     return render(
         request,
@@ -31,4 +31,12 @@ def index(request):
 
 
 def wave(request, waveID):
-    return render(request, 'bashMyWave/wave.html')
+    audioFile = get_object_or_404(AudioFile, pk=waveID)
+    return render(
+        request,
+        'bashMyWave/wave.html',
+        {
+            'audiofile': audioFile,
+            'comments': Comment.objects.filter(audiofile=audioFile)
+        }
+    )
