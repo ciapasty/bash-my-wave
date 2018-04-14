@@ -1,20 +1,9 @@
 import React, { Component } from 'react';
 // import AudioPlayer from './AudioPlayer';
 import AudiofileView from './AudiofileView';
-import logo from './logo.svg';
-import playIcon from './play.png';
-import pauseIcon from './pause.png';
 import './App.css';
 
 class App extends Component {
-  render() {
-    return (
-      <AudiofileCommentView />
-    );
-  }
-}
-
-class AudiofileCommentView extends Component {
   constructor(props) {
     super(props);
     this.state = { audio: "" };
