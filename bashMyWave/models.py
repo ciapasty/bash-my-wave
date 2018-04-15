@@ -5,7 +5,7 @@ class AudioFile(models.Model):
     upload_date = models.DateTimeField('date uploaded')
     user = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
-    file_path = models.CharField(max_length=200)
+    file = models.FileField(upload_to='audio')
     waveform_short = models.TextField()
 
     def __str__(self):
