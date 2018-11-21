@@ -2,8 +2,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.http import FileResponse
-
-from django.core.files import File
+# from django.core.files import File
 
 # from .forms import UploadFileForm
 from .models import AudioFile, Comment

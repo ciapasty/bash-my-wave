@@ -1,7 +1,7 @@
 from django.utils import timezone
-from django.core.files.storage import FileSystemStorage
 
 from .models import AudioFile
+from . import WaveReader
 
 import logging
 logger = logging.getLogger('debug.log')
@@ -17,12 +17,14 @@ def handle_uploaded_file(files):
     if (len(existingFile) > 0):
         return (None, tempFile.name + ': file already exists.\n')
 
+    #rawAudio = WaveReader.read(tempFile.temporary_file_path)
+
     audioFile = AudioFile(
         upload_date=timezone.now(),
         user='mattijah',
         name=tempFile.name,
-        file=tempFile,
-        waveform_short=''  # TODO: make proper handling
+        file=tempFile
+        #waveform_short=WaveReader.generateWaveformSummary(rawAudio['riffHeader'], 1000, rawAudio['audioData'])
     )
     
     audioFile.save()
